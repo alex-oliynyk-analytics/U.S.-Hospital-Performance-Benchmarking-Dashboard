@@ -1,6 +1,9 @@
 -- =====================================================
--- U.S. Hospital Performance Benchmarking Dashboard
--- SQL Cleaning & Validation Queries
+-- Project:  U.S. Hospital Performance Benchmarking
+-- Author:   Alex Oliynyk
+-- Data:     CMS Timely and Effective Care Dataset
+-- Tool:     SQLite / DB Browser for SQLite
+-- GitHub:   github.com/alex-oliynyk-analytics
 -- =====================================================
 
 -- =====================================================
@@ -136,4 +139,35 @@ SELECT
 FROM healthcare_final_v2
 WHERE "Measure Name" = 'Appropriate care for severe sepsis and septic shock'
 GROUP BY State
+ORDER BY avg_score DESC;
+
+-- =====================================================
+-- 11. State Performance Ranking (Window Function)
+-- =====================================================
+SELECT
+    State,
+    ROUND(AVG(Score), 2) AS avg_score,
+    COUNT(DISTINCT "Facility ID") AS hospitals_reporting,
+    RANK() OVER (ORDER BY AVG(Score) DESC) AS state_rank
+FROM healthcare_final_v2
+WHERE "Measure Name" = 'Appropriate care for severe sepsis and septic shock'
+GROUP BY State
+ORDER BY state_rank;
+
+-- =====================================================
+-- 12. Hospital Performance Tiers by Measure
+-- =====================================================
+SELECT
+    "Facility Name",
+    State,
+    ROUND(AVG(Score), 2) AS avg_score,
+    CASE
+        WHEN AVG(Score) >= 90 THEN 'High Performer'
+        WHEN AVG(Score) >= 70 THEN 'Average Performer'
+        WHEN AVG(Score) >= 50 THEN 'Below Average'
+        ELSE 'Low Performer'
+    END AS performance_tier
+FROM healthcare_final_v2
+WHERE "Measure Name" = 'Appropriate care for severe sepsis and septic shock'
+GROUP BY "Facility Name", State
 ORDER BY avg_score DESC;
